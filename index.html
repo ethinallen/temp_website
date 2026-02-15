@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drew Emery</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    (function() {
+      var saved = localStorage.getItem('theme');
+      if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to content</a>
+
+  <button class="theme-toggle" id="theme-toggle" aria-label="Switch to dark mode">
+    <i class="fa-solid fa-moon" aria-hidden="true"></i>
+  </button>
+
+  <header class="jumbotron">
+    <h1>Drew Emery</h1>
+  </header>
+
+  <main id="main">
+    <section>
+      <h2>What I Do</h2>
+      <p>I'm a Developer Success Engineer at <a href="https://workos.com" class="highlight-workos">WorkOS</a>. I've done a tour of software companies, mostly in authentication and authorization, wearing a modest number of hats &mdash; from large enterprise teams to burgeoning, scrappy startups whose founders were learning the ropes, and a few companies in between. I've learned that nobody has it figured out, some more so than others, and that to make it to the top, you're going to need some help.</p>
+    </section>
+
+    <section>
+      <h2>Where I Came From</h2>
+      <p>I studied Industrial Engineering with an emphasis in computing at Clemson University, where I also ran for the Tigers. I attended Clemson's first hackathon and loved it so much I joined the organizing team, which helped me meet incredible people that fostered a love for CS and taught me the power of building a diverse team. I was fortunate enough to lead the tech team my last year of CUhackit, where I learned that when you become a leader, it's about enabling those more technically minded than you rather than trying to be the most technical on the team.</p>
+    </section>
+
+    <section>
+      <h2>On Two Wheels</h2>
+      <p>Outside of work, I'm a bicycle enjoyer on a journey to meet people and learn about the world. After realizing how dangerous it was to ride my bike in New Jersey, I took to the streets and started putting up fliers for what would become the first <a href="https://cmp.bike">critical mass in Princeton</a>. This has been an incredible journey that helped me meet some really incredible people that help keep New Jersey rolling.</p>
+    </section>
+
+    <section>
+      <h2>Accessibility</h2>
+      <p>I care deeply about making the world a more accessible place &mdash; from the environments we engineer to the applications we make. Accessibility needs to be a first consideration rather than an afterthought, and I think this is something we collectively as a society are just learning how to do.</p>
+    </section>
+
+    <section>
+      <h2>What's Next</h2>
+      <p>I keep an eye out for my next idea in case it's good enough to start a company of my own. Until then, I continue to learn from the amazing people on my team and anyone willing to share their experiences with me.</p>
+    </section>
+  </main>
+
+  <script>
+    const toggle = document.getElementById('theme-toggle');
+    const icon = toggle.querySelector('i');
+
+    function updateToggle() {
+      const isDark = document.documentElement.classList.contains('dark');
+      if (isDark) {
+        icon.classList.replace('fa-moon', 'fa-sun');
+        toggle.setAttribute('aria-label', 'Switch to light mode');
+      } else {
+        icon.classList.replace('fa-sun', 'fa-moon');
+        toggle.setAttribute('aria-label', 'Switch to dark mode');
+      }
+    }
+
+    updateToggle();
+
+    toggle.addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      const isDark = document.documentElement.classList.contains('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      updateToggle();
+    });
+  </script>
+</body>
+</html>
