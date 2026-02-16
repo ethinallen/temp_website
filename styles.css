@@ -112,6 +112,18 @@ a:focus-visible {
   border-radius: 2px;
 }
 
+footer {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+  border-top: 1px solid #e0e0e0;
+  text-align: center;
+}
+
+html.dark footer {
+  border-top-color: #333;
+}
+
 html.dark a {
   color: #90caf9;
 }

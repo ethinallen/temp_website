@@ -56,6 +56,10 @@
     </section>
   </main>
 
+  <footer>
+    <p>I'd love to hear how you found this page, hear about the problems you're trying to solve, or just connect. I can be somewhat reliably reached at <a id="contact" href="#">Loading...</a></p>
+  </footer>
+
   <script>
     const toggle = document.getElementById('theme-toggle');
     const icon = toggle.querySelector('i');
@@ -79,6 +83,14 @@
       localStorage.setItem('theme', isDark ? 'dark' : 'light');
       updateToggle();
     });
+
+    (function() {
+      var c = document.getElementById('contact');
+      var u = 'drew';
+      var d = 'emery.guru';
+      c.href = 'mail' + 'to:' + u + '@' + d;
+      c.textContent = u + '@' + d;
+    })();
   </script>
 </body>
 </html>
