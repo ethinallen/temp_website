@@ -58,6 +58,10 @@ html.dark .skip-link {
   border-radius: 4px;
 }
 
+.icon-sun { display: none; }
+html.dark .icon-moon { display: none; }
+html.dark .icon-sun { display: inline; }
+
 .theme-toggle:focus-visible {
   outline: 2px solid #6363f1;
   outline-offset: 4px;
