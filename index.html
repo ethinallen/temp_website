@@ -114,6 +114,7 @@
 
       var settled = false;
       var startCache = null;
+      var endCache = null;
       var ticking = false;
 
       function lerp(a, b, t) {
@@ -142,9 +143,61 @@
         startCache = {
           left: rect.left,
           top: rect.top,
+          bottom: rect.bottom,
           fontSize: startFontSize,
-          scale: startFontSize / endFontSize
+          scale: startFontSize / endFontSize,
+          endFontSize: endFontSize
         };
+      }
+
+      function pinHeroAtStart() {
+        if (!startCache) cacheStart();
+        if (heroTitle.dataset.fixed) return;
+
+        heroTitle.dataset.fixed = '1';
+        heroTitle.style.position = 'fixed';
+        heroTitle.style.zIndex = '5';
+        heroTitle.style.margin = '0';
+        heroTitle.style.whiteSpace = 'nowrap';
+        heroTitle.style.lineHeight = getComputedStyle(nameSlot).lineHeight;
+        heroTitle.style.fontSize = startCache.endFontSize + 'px';
+        heroTitle.style.left = startCache.left + 'px';
+        heroTitle.style.transform = 'scale(' + startCache.scale + ')';
+        heroTitle.style.transformOrigin = 'left bottom';
+        heroTitle.style.top = (startCache.bottom - heroTitle.offsetHeight) + 'px';
+      }
+
+      function cacheStartDoc() {
+        if (!startCache) return;
+        var pinnedTop = parseFloat(heroTitle.style.top);
+        startCache.docLeft = startCache.left + window.scrollX;
+        startCache.docTop = pinnedTop + window.scrollY;
+      }
+
+      function cacheEnd() {
+        var html = document.documentElement;
+        var savedY = window.scrollY;
+        html.style.overflow = 'hidden';
+        window.scrollTo(0, scrollEnd());
+        document.documentElement.style.setProperty('--hero-progress', '1');
+        introPrefix.style.opacity = '1';
+        introSuffix.style.opacity = '1';
+
+        heroTitle.style.fontSize = startCache.endFontSize + 'px';
+        heroTitle.style.lineHeight = getComputedStyle(nameSlot).lineHeight;
+        var lineBottom = introPrefix.getBoundingClientRect().bottom;
+        var pinnedTop = lineBottom - heroTitle.offsetHeight;
+
+        endCache = {
+          docLeft: nameSlot.getBoundingClientRect().left + window.scrollX,
+          docTop: pinnedTop + window.scrollY
+        };
+
+        window.scrollTo(0, savedY);
+        document.documentElement.style.setProperty('--hero-progress', '0');
+        introPrefix.style.opacity = '';
+        introSuffix.style.opacity = '';
+        html.style.overflow = '';
       }
 
       function scrollEnd() {
@@ -172,8 +225,7 @@
         heroTitle.style.left = nameSlot.getBoundingClientRect().left + 'px';
         heroTitle.style.fontSize = endFontSize + 'px';
         heroTitle.style.lineHeight = getComputedStyle(nameSlot).lineHeight;
-        var slotRect = nameSlot.getBoundingClientRect();
-        heroTitle.style.top = (slotRect.bottom - heroTitle.offsetHeight) + 'px';
+        heroTitle.style.top = slotEndTop() + 'px';
         heroTitle.style.transformOrigin = 'left bottom';
         heroTitle.style.transform = 'scale(1)';
         heroTitle.classList.add('hero-title--settled');
@@ -192,14 +244,12 @@
         compensateScroll(anchorTop);
       }
 
-      function ensurePinned() {
-        if (heroTitle.dataset.fixed) return;
-        heroTitle.dataset.fixed = '1';
-        heroTitle.style.position = 'fixed';
-        heroTitle.style.lineHeight = '1';
-        heroTitle.style.zIndex = '5';
-        heroTitle.style.margin = '0';
-        heroTitle.style.whiteSpace = 'nowrap';
+      function slotEndTop() {
+        heroTitle.style.fontSize = parseFloat(getComputedStyle(nameSlot).fontSize) + 'px';
+        heroTitle.style.lineHeight = getComputedStyle(nameSlot).lineHeight;
+        // Bottom-align to the prefix line box so the name sits on the same row.
+        var lineBottom = introPrefix.getBoundingClientRect().bottom;
+        return lineBottom - heroTitle.offsetHeight;
       }
 
       function update() {
@@ -208,45 +258,28 @@
 
         var t = progress();
 
-        // Layout must reflect current progress before we measure the slot.
         document.documentElement.style.setProperty('--hero-progress', String(t));
         introPrefix.style.opacity = t;
-        introSuffix.style.opacity = Math.min(1, Math.max(0, (t - 0.75) / 0.25));
+        introSuffix.style.opacity = t >= 0.75 ? Math.min(1, (t - 0.75) / 0.25) : 0;
 
         if (t >= 1) {
           settle();
           return;
         }
 
-        if (t === 0) {
-          if (heroTitle.dataset.fixed) {
-            clearHeroStyles();
-            startCache = null;
-          }
-          if (!startCache) cacheStart();
-        } else {
-          if (!startCache) cacheStart();
-          ensurePinned();
+        if (!startCache || !endCache) return;
+        pinHeroAtStart();
 
-          var slotRect = nameSlot.getBoundingClientRect();
-          var endFontSize = parseFloat(getComputedStyle(nameSlot).fontSize);
-          var scale = lerp(startCache.scale, 1, t);
+        var docLeft = lerp(startCache.docLeft, endCache.docLeft, t);
+        var docTop = lerp(startCache.docTop, endCache.docTop, t);
+        var scale = lerp(startCache.scale, 1, t);
 
-          heroTitle.style.fontSize = endFontSize + 'px';
-          heroTitle.style.lineHeight = getComputedStyle(nameSlot).lineHeight;
-
-          var endTop = slotRect.bottom - heroTitle.offsetHeight;
-          // Hold the hero position briefly, then ease toward the slot as the
-          // intro rises; lock on at the end so the name lands cleanly.
-          var moveT = Math.max(0, Math.min(1, (t - 0.06) / 0.94));
-          if (t > 0.92) {
-            moveT = lerp(moveT, 1, (t - 0.92) / 0.08);
-          }
-          heroTitle.style.left = lerp(startCache.left, slotRect.left, moveT) + 'px';
-          heroTitle.style.top = lerp(startCache.top, endTop, moveT) + 'px';
-          heroTitle.style.transform = 'scale(' + scale + ')';
-          heroTitle.style.transformOrigin = 'left bottom';
-        }
+        heroTitle.style.fontSize = startCache.endFontSize + 'px';
+        heroTitle.style.lineHeight = getComputedStyle(nameSlot).lineHeight;
+        heroTitle.style.left = (docLeft - window.scrollX) + 'px';
+        heroTitle.style.top = (docTop - window.scrollY) + 'px';
+        heroTitle.style.transform = 'scale(' + scale + ')';
+        heroTitle.style.transformOrigin = 'left bottom';
       }
 
       function requestUpdate() {
@@ -262,6 +295,9 @@
       }
 
       cacheStart();
+      pinHeroAtStart();
+      cacheStartDoc();
+      cacheEnd();
       introPrefix.setAttribute('aria-hidden', 'true');
       introSuffix.setAttribute('aria-hidden', 'true');
       update();
@@ -270,10 +306,12 @@
       window.addEventListener('resize', function() {
         if (settled) return;
         startCache = null;
-        if (progress() === 0) {
-          clearHeroStyles();
-          cacheStart();
-        }
+        endCache = null;
+        clearHeroStyles();
+        cacheStart();
+        pinHeroAtStart();
+        cacheStartDoc();
+        cacheEnd();
         requestUpdate();
       });
     })();
