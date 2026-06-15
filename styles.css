@@ -10,6 +10,7 @@ body {
   color: #1a1a1a;
   background: #fff;
   transition: background 0.3s, color 0.3s;
+  overflow-anchor: none;
 }
 
 html.dark body {
@@ -67,18 +68,108 @@ html.dark .icon-sun { display: inline; }
   outline-offset: 4px;
 }
 
-.jumbotron {
+/* Hero scroll morph */
+.hero-scroll {
+  height: 200vh;
+  position: relative;
+  z-index: 1;
+}
+
+.hero-scroll + main {
+  margin-top: -100vh;
+  position: relative;
+  z-index: 2;
+}
+
+body.hero-settled .hero-scroll + main {
+  margin-top: 0;
+}
+
+.hero-scroll--settled {
+  height: 0;
+  overflow: hidden;
+}
+
+.hero-sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 50vh;
-  padding: 2rem;
+  pointer-events: none;
 }
 
-.jumbotron h1 {
+.hero-title {
+  font-family: "Montserrat", sans-serif;
   font-size: clamp(2.5rem, 8vw, 5rem);
   font-weight: 700;
   letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.hero-title--settled {
+  display: inline;
+  font-size: inherit;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  white-space: normal;
+}
+
+.intro {
+  margin-bottom: 2.5rem;
+  min-height: calc((1 - var(--hero-progress, 0)) * 50vh);
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: calc((1 - var(--hero-progress, 0)) * 1rem);
+}
+
+body.hero-settled .intro {
+  min-height: 0;
+  display: block;
+  padding-bottom: 0;
+}
+
+.intro-lead {
+  font-size: 1.05rem;
+  white-space: nowrap;
+}
+
+body.hero-settled .intro-lead {
+  white-space: normal;
+}
+
+.name-slot {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  visibility: hidden;
+}
+
+.intro-prefix,
+.intro-suffix {
+  opacity: 0;
+}
+
+body.hero-settled .intro-prefix,
+body.hero-settled .intro-suffix {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-scroll {
+    height: 0;
+    overflow: hidden;
+  }
+
+  .intro-prefix,
+  .intro-suffix {
+    opacity: 1;
+  }
+
+  .name-slot {
+    visibility: visible;
+  }
 }
 
 main {
@@ -148,4 +239,66 @@ html.dark .highlight-workos {
 
 html.dark .highlight-workos:hover {
   background: linear-gradient(to top, rgba(99, 99, 241, 0.6) 50%, transparent 50%);
+}
+
+/* Navbar */
+.site-nav {
+  font-family: "Montserrat", sans-serif;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.9rem;
+  display: flex;
+  gap: 1.5rem;
+}
+
+.site-nav a {
+  text-decoration: none;
+  opacity: 0.7;
+}
+
+.site-nav a:hover {
+  opacity: 1;
+}
+
+/* Read-more links in bio sections */
+.read-more {
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+  font-style: italic;
+}
+
+/* Thoughts overview page */
+.thoughts-list {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 1.5rem 4rem;
+  list-style: none;
+}
+
+.thoughts-list li {
+  margin-bottom: 2rem;
+}
+
+.thoughts-list h2 {
+  margin-bottom: 0.25rem;
+}
+
+.thoughts-list p {
+  margin-bottom: 0.25rem;
+}
+
+/* Thought page */
+.thought-page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+.thought-page h1 {
+  font-size: clamp(1.75rem, 5vw, 2.5rem);
+  margin-bottom: 1rem;
+}
+
+.thought-page p {
+  font-size: 1.05rem;
+  margin-bottom: 1rem;
 }

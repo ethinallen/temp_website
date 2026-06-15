@@ -21,16 +21,29 @@
 <body>
   <a href="#main" class="skip-link">Skip to content</a>
 
+  <nav class="site-nav">
+    <a href="index.html">Home</a>
+    <a href="thoughts/index.html">Thoughts</a>
+  </nav>
+
   <button class="theme-toggle" id="theme-toggle" aria-label="Switch to dark mode">
     <svg class="icon-moon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="1em" height="1em" fill="currentColor"><path d="M223.5 32C100 32 0 132.3 0 256S100 480 223.5 480c60.6 0 115.5-24.2 155.8-63.4c5-4.9 6.3-12.5 3.1-18.7s-10.1-9.7-17-8.5c-9.8 1.7-19.8 2.6-30.1 2.6c-96.9 0-175.5-78.8-175.5-176c0-65.8 36-123.1 89.3-153.3c6.1-3.5 9.2-10.5 7.7-17.3s-7.3-11.9-14.3-12.5c-6.3-.5-12.6-.8-19-.8z"/></svg>
     <svg class="icon-sun" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor"><path d="M361.5 1.2c5 2.1 8.6 6.6 9.6 11.9L391 121l107.9 19.8c5.3 1 9.8 4.6 11.9 9.6s1.5 10.7-1.6 15.2L446.9 256l62.3 90.3c3.1 4.5 3.7 10.2 1.6 15.2s-6.6 8.6-11.9 9.6L391 390.9l-19.9 107.9c-1 5.3-4.6 9.8-9.6 11.9s-10.7 1.5-15.2-1.6L256 446.9l-90.3 62.3c-4.5 3.1-10.2 3.7-15.2 1.6s-8.6-6.6-9.6-11.9L121 391 13.1 371.1c-5.3-1-9.8-4.6-11.9-9.6s-1.5-10.7 1.6-15.2L65.1 256 2.8 165.7c-3.1-4.5-3.7-10.2-1.6-15.2s6.6-8.6 11.9-9.6L121 121 140.9 13.1c1-5.3 4.6-9.8 9.6-11.9s10.7-1.5 15.2 1.6L256 65.1 346.3 2.8c4.5-3.1 10.2-3.7 15.2-1.6zM160 256a96 96 0 1 1 192 0 96 96 0 1 1 -192 0zm224 0a128 128 0 1 0 -256 0 128 128 0 1 0 256 0z"/></svg>
   </button>
 
-  <header class="jumbotron">
-    <h1>Drew Emery</h1>
-  </header>
+  <section class="hero-scroll" id="hero-scroll">
+    <div class="hero-sticky">
+      <h1 class="hero-title" id="hero-title">Drew Emery</h1>
+    </div>
+  </section>
 
   <main id="main">
+    <section class="intro">
+      <p class="intro-lead" id="intro-lead">
+        <span class="intro-prefix" id="intro-prefix">Hey there, I'm </span><span class="name-slot" id="name-slot" aria-hidden="true">Drew Emery</span><span class="intro-suffix" id="intro-suffix">. This is a bit about what I do, where I came from, and what I care about.</span>
+      </p>
+    </section>
+
     <section>
       <h2>How I Feed Myself</h2>
       <p>For work, I'm a Developer Success Engineer at <a href="https://workos.com" class="highlight-workos">WorkOS</a>. I joined when the team was about 55 people &mdash; not the smallest company I've been at, but still very much a small team. Everyone is sharp and eager to help, and it's been a pleasure learning from some of the brightest minds in a setting that's fast-paced but immensely collaborative. Along the way, I've learned that nobody has it figured out, some more so than others, and that to make it to the top, you're going to need some help.</p>
@@ -44,11 +57,13 @@
     <section>
       <h2>On Two Wheels</h2>
       <p>Outside of work, I'm a bicycle enjoyer. Without the chaos and urgency of cars, you're free to listen within as well as without &mdash; your heartbeat, the world around you, the quiet. By bike, the journey is truly meant to be enjoyed as much as the destination, and it comes at nobody's expense. After realizing how dangerous it was to ride in New Jersey, I took to the streets and started putting up fliers for what would become the first <a href="https://cmp.bike">critical mass in Princeton</a>. It's been an amazing ride that connected me with some really incredible people that help keep New Jersey rolling.</p>
+      <p class="read-more"><a href="thoughts/biking.html">Read more about my thoughts on biking &amp; infrastructure &rarr;</a></p>
     </section>
 
     <section>
       <h2>Accessibility</h2>
       <p>I care deeply about making the world a more accessible place &mdash; from the environments we engineer to the applications we make. Accessibility needs to be a first consideration rather than an afterthought, and I think this is something we collectively as a society are just learning how to do.</p>
+      <p class="read-more"><a href="thoughts/accessibility.html">Read more about my thoughts on accessibility &rarr;</a></p>
     </section>
 
     <section>
@@ -84,6 +99,183 @@
       var d = 'emery.guru';
       c.href = 'mail' + 'to:' + u + '@' + d;
       c.textContent = u + '@' + d;
+    })();
+
+    (function() {
+      var heroScroll = document.getElementById('hero-scroll');
+      var heroTitle = document.getElementById('hero-title');
+      var nameSlot = document.getElementById('name-slot');
+      var introPrefix = document.getElementById('intro-prefix');
+      var introSuffix = document.getElementById('intro-suffix');
+      var introLead = document.getElementById('intro-lead');
+      var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      if (!heroScroll || !heroTitle || !nameSlot) return;
+
+      var settled = false;
+      var startCache = null;
+      var ticking = false;
+
+      function lerp(a, b, t) {
+        return a + (b - a) * t;
+      }
+
+      function clearHeroStyles() {
+        heroTitle.style.position = '';
+        heroTitle.style.left = '';
+        heroTitle.style.top = '';
+        heroTitle.style.fontSize = '';
+        heroTitle.style.lineHeight = '';
+        heroTitle.style.zIndex = '';
+        heroTitle.style.margin = '';
+        heroTitle.style.whiteSpace = '';
+        heroTitle.style.transform = '';
+        heroTitle.style.transformOrigin = '';
+        delete heroTitle.dataset.fixed;
+      }
+
+      function cacheStart() {
+        clearHeroStyles();
+        var rect = heroTitle.getBoundingClientRect();
+        var endFontSize = parseFloat(getComputedStyle(nameSlot).fontSize);
+        var startFontSize = parseFloat(getComputedStyle(heroTitle).fontSize);
+        startCache = {
+          left: rect.left,
+          top: rect.top,
+          fontSize: startFontSize,
+          scale: startFontSize / endFontSize
+        };
+      }
+
+      function scrollEnd() {
+        return Math.max(heroScroll.offsetHeight - window.innerHeight, 1);
+      }
+
+      function progress() {
+        return Math.min(Math.max(window.scrollY / scrollEnd(), 0), 1);
+      }
+
+      function compensateScroll(anchorTop) {
+        var drift = heroTitle.getBoundingClientRect().top - anchorTop;
+        if (Math.abs(drift) > 0.5) {
+          window.scrollBy(0, drift);
+        }
+      }
+
+      function settle() {
+        if (settled) return;
+        settled = true;
+
+        var anchorTop = heroTitle.getBoundingClientRect().top;
+        var endFontSize = parseFloat(getComputedStyle(nameSlot).fontSize);
+
+        heroTitle.style.left = nameSlot.getBoundingClientRect().left + 'px';
+        heroTitle.style.fontSize = endFontSize + 'px';
+        heroTitle.style.lineHeight = getComputedStyle(nameSlot).lineHeight;
+        var slotRect = nameSlot.getBoundingClientRect();
+        heroTitle.style.top = (slotRect.bottom - heroTitle.offsetHeight) + 'px';
+        heroTitle.style.transformOrigin = 'left bottom';
+        heroTitle.style.transform = 'scale(1)';
+        heroTitle.classList.add('hero-title--settled');
+        nameSlot.replaceWith(heroTitle);
+        clearHeroStyles();
+        document.documentElement.style.setProperty('--hero-progress', '1');
+        heroScroll.classList.add('hero-scroll--settled');
+        heroScroll.setAttribute('aria-hidden', 'true');
+        document.body.classList.add('hero-settled');
+        introPrefix.style.opacity = '';
+        introSuffix.style.opacity = '';
+        introPrefix.removeAttribute('aria-hidden');
+        introSuffix.removeAttribute('aria-hidden');
+
+        // Collapsing the hero shrinks the document; keep the name anchored on screen.
+        compensateScroll(anchorTop);
+      }
+
+      function ensurePinned() {
+        if (heroTitle.dataset.fixed) return;
+        heroTitle.dataset.fixed = '1';
+        heroTitle.style.position = 'fixed';
+        heroTitle.style.lineHeight = '1';
+        heroTitle.style.zIndex = '5';
+        heroTitle.style.margin = '0';
+        heroTitle.style.whiteSpace = 'nowrap';
+      }
+
+      function update() {
+        ticking = false;
+        if (settled) return;
+
+        var t = progress();
+
+        // Layout must reflect current progress before we measure the slot.
+        document.documentElement.style.setProperty('--hero-progress', String(t));
+        introPrefix.style.opacity = t;
+        introSuffix.style.opacity = Math.min(1, Math.max(0, (t - 0.75) / 0.25));
+
+        if (t >= 1) {
+          settle();
+          return;
+        }
+
+        if (t === 0) {
+          if (heroTitle.dataset.fixed) {
+            clearHeroStyles();
+            startCache = null;
+          }
+          if (!startCache) cacheStart();
+        } else {
+          if (!startCache) cacheStart();
+          ensurePinned();
+
+          var slotRect = nameSlot.getBoundingClientRect();
+          var endFontSize = parseFloat(getComputedStyle(nameSlot).fontSize);
+          var scale = lerp(startCache.scale, 1, t);
+
+          heroTitle.style.fontSize = endFontSize + 'px';
+          heroTitle.style.lineHeight = getComputedStyle(nameSlot).lineHeight;
+
+          var endTop = slotRect.bottom - heroTitle.offsetHeight;
+          // Hold the hero position briefly, then ease toward the slot as the
+          // intro rises; lock on at the end so the name lands cleanly.
+          var moveT = Math.max(0, Math.min(1, (t - 0.06) / 0.94));
+          if (t > 0.92) {
+            moveT = lerp(moveT, 1, (t - 0.92) / 0.08);
+          }
+          heroTitle.style.left = lerp(startCache.left, slotRect.left, moveT) + 'px';
+          heroTitle.style.top = lerp(startCache.top, endTop, moveT) + 'px';
+          heroTitle.style.transform = 'scale(' + scale + ')';
+          heroTitle.style.transformOrigin = 'left bottom';
+        }
+      }
+
+      function requestUpdate() {
+        if (!ticking) {
+          ticking = true;
+          requestAnimationFrame(update);
+        }
+      }
+
+      if (reducedMotion) {
+        settle();
+        return;
+      }
+
+      cacheStart();
+      introPrefix.setAttribute('aria-hidden', 'true');
+      introSuffix.setAttribute('aria-hidden', 'true');
+      update();
+
+      window.addEventListener('scroll', requestUpdate, { passive: true });
+      window.addEventListener('resize', function() {
+        if (settled) return;
+        startCache = null;
+        if (progress() === 0) {
+          clearHeroStyles();
+          cacheStart();
+        }
+        requestUpdate();
+      });
     })();
   </script>
 </body>
