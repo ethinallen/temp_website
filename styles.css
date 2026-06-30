@@ -85,13 +85,13 @@ html.dark .icon-sun { display: inline; }
   z-index: 2;
 }
 
-body.hero-settled .hero-scroll + main {
-  margin-top: 0;
-}
-
 .hero-scroll--settled {
   height: 0;
   overflow: hidden;
+}
+
+body.hero-settled .hero-scroll + main {
+  margin-top: 0;
 }
 
 .hero-sticky {
@@ -172,6 +172,10 @@ body.hero-settled .intro-suffix {
     overflow: hidden;
   }
 
+  .hero-scroll + main {
+    margin-top: 0;
+  }
+
   .intro-prefix,
   .intro-suffix {
     opacity: 1;
@@ -188,6 +192,7 @@ main {
   margin: 0 auto;
   padding: 0 1.5rem 4rem;
   overflow-x: clip;
+  overflow-anchor: none;
 }
 
 main section {

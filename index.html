@@ -107,7 +107,6 @@
       var nameSlot = document.getElementById('name-slot');
       var introPrefix = document.getElementById('intro-prefix');
       var introSuffix = document.getElementById('intro-suffix');
-      var introLead = document.getElementById('intro-lead');
       var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
       if (!heroScroll || !heroTitle || !nameSlot) return;
@@ -115,10 +114,23 @@
       var settled = false;
       var startCache = null;
       var endCache = null;
+      var cachedScrollEnd = null;
       var ticking = false;
 
       function lerp(a, b, t) {
         return a + (b - a) * t;
+      }
+
+      function viewportHeight() {
+        return window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      }
+
+      function pageScrollY() {
+        return window.scrollY;
+      }
+
+      function pageScrollX() {
+        return window.scrollX;
       }
 
       function clearHeroStyles() {
@@ -170,8 +182,8 @@
       function cacheStartDoc() {
         if (!startCache) return;
         var pinnedTop = parseFloat(heroTitle.style.top);
-        startCache.docLeft = startCache.left + window.scrollX;
-        startCache.docTop = pinnedTop + window.scrollY;
+        startCache.docLeft = startCache.left + pageScrollX();
+        startCache.docTop = pinnedTop + pageScrollY();
       }
 
       function cacheEnd() {
@@ -189,8 +201,8 @@
         var pinnedTop = lineBottom - heroTitle.offsetHeight;
 
         endCache = {
-          docLeft: nameSlot.getBoundingClientRect().left + window.scrollX,
-          docTop: pinnedTop + window.scrollY
+          docLeft: nameSlot.getBoundingClientRect().left + pageScrollX(),
+          docTop: pinnedTop + pageScrollY()
         };
 
         window.scrollTo(0, savedY);
@@ -201,55 +213,90 @@
       }
 
       function scrollEnd() {
-        return Math.max(heroScroll.offsetHeight - window.innerHeight, 1);
+        if (cachedScrollEnd === null) {
+          cachedScrollEnd = Math.max(heroScroll.offsetHeight - viewportHeight(), 1);
+        }
+        return cachedScrollEnd;
       }
 
       function progress() {
-        return Math.min(Math.max(window.scrollY / scrollEnd(), 0), 1);
+        return Math.min(Math.max(pageScrollY() / scrollEnd(), 0), 1);
       }
 
-      function compensateScroll(anchorTop) {
-        var drift = heroTitle.getBoundingClientRect().top - anchorTop;
-        if (Math.abs(drift) > 0.5) {
-          window.scrollBy(0, drift);
+      function recacheMetrics() {
+        if (settled) return;
+        cachedScrollEnd = null;
+        startCache = null;
+        endCache = null;
+        clearHeroStyles();
+        cacheStart();
+        pinHeroAtStart();
+        cacheStartDoc();
+        cacheEnd();
+      }
+
+      function clampScrollToEnd() {
+        var end = scrollEnd();
+        if (pageScrollY() > end) {
+          window.scrollTo(0, end);
         }
+      }
+
+      function pinIntroLine(anchorTop) {
+        function fix() {
+          var drift = introPrefix.getBoundingClientRect().top - anchorTop;
+          if (Math.abs(drift) > 0.5) {
+            window.scrollTo(0, window.scrollY + drift);
+          }
+        }
+
+        fix();
+        requestAnimationFrame(function() {
+          fix();
+          requestAnimationFrame(fix);
+        });
+      }
+
+      function compensateScroll(scrollBefore, anchorTop, mainMarginTop) {
+        window.scrollTo(0, Math.max(0, scrollBefore + mainMarginTop));
+        pinIntroLine(anchorTop);
       }
 
       function settle() {
         if (settled) return;
         settled = true;
+        clampScrollToEnd();
 
-        var anchorTop = heroTitle.getBoundingClientRect().top;
-        var endFontSize = parseFloat(getComputedStyle(nameSlot).fontSize);
+        var scrollBefore = window.scrollY;
+        var anchorTop = introPrefix.getBoundingClientRect().top;
+        var mainMarginTop = parseFloat(getComputedStyle(heroScroll.nextElementSibling).marginTop) || 0;
+        var html = document.documentElement;
+        var prevOverflow = html.style.overflow;
 
-        heroTitle.style.left = nameSlot.getBoundingClientRect().left + 'px';
-        heroTitle.style.fontSize = endFontSize + 'px';
-        heroTitle.style.lineHeight = getComputedStyle(nameSlot).lineHeight;
-        heroTitle.style.top = slotEndTop() + 'px';
-        heroTitle.style.transformOrigin = 'left bottom';
-        heroTitle.style.transform = 'scale(1)';
-        heroTitle.classList.add('hero-title--settled');
-        nameSlot.replaceWith(heroTitle);
-        clearHeroStyles();
         document.documentElement.style.setProperty('--hero-progress', '1');
-        heroScroll.classList.add('hero-scroll--settled');
-        heroScroll.setAttribute('aria-hidden', 'true');
-        document.body.classList.add('hero-settled');
         introPrefix.style.opacity = '';
         introSuffix.style.opacity = '';
         introPrefix.removeAttribute('aria-hidden');
         introSuffix.removeAttribute('aria-hidden');
 
-        // Collapsing the hero shrinks the document; keep the name anchored on screen.
-        compensateScroll(anchorTop);
-      }
+        if (heroTitle.dataset.fixed) {
+          var slotRect = nameSlot.getBoundingClientRect();
+          heroTitle.style.left = slotRect.left + 'px';
+          heroTitle.style.top = slotRect.top + 'px';
+          heroTitle.style.transform = 'scale(1)';
+        }
 
-      function slotEndTop() {
-        heroTitle.style.fontSize = parseFloat(getComputedStyle(nameSlot).fontSize) + 'px';
-        heroTitle.style.lineHeight = getComputedStyle(nameSlot).lineHeight;
-        // Bottom-align to the prefix line box so the name sits on the same row.
-        var lineBottom = introPrefix.getBoundingClientRect().bottom;
-        return lineBottom - heroTitle.offsetHeight;
+        heroTitle.classList.add('hero-title--settled');
+        nameSlot.replaceWith(heroTitle);
+
+        html.style.overflow = 'hidden';
+        heroScroll.classList.add('hero-scroll--settled');
+        heroScroll.setAttribute('aria-hidden', 'true');
+        document.body.classList.add('hero-settled');
+        compensateScroll(scrollBefore, anchorTop, mainMarginTop);
+        clearHeroStyles();
+        pinIntroLine(anchorTop);
+        html.style.overflow = prevOverflow;
       }
 
       function update() {
@@ -276,8 +323,8 @@
 
         heroTitle.style.fontSize = startCache.endFontSize + 'px';
         heroTitle.style.lineHeight = getComputedStyle(nameSlot).lineHeight;
-        heroTitle.style.left = (docLeft - window.scrollX) + 'px';
-        heroTitle.style.top = (docTop - window.scrollY) + 'px';
+        heroTitle.style.left = (docLeft - pageScrollX()) + 'px';
+        heroTitle.style.top = (docTop - pageScrollY()) + 'px';
         heroTitle.style.transform = 'scale(' + scale + ')';
         heroTitle.style.transformOrigin = 'left bottom';
       }
@@ -305,15 +352,20 @@
       window.addEventListener('scroll', requestUpdate, { passive: true });
       window.addEventListener('resize', function() {
         if (settled) return;
-        startCache = null;
-        endCache = null;
-        clearHeroStyles();
-        cacheStart();
-        pinHeroAtStart();
-        cacheStartDoc();
-        cacheEnd();
+        recacheMetrics();
         requestUpdate();
       });
+
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', function() {
+          if (settled) return;
+          if (window.scrollY < 10) {
+            recacheMetrics();
+            requestUpdate();
+          }
+        });
+        window.visualViewport.addEventListener('scroll', requestUpdate);
+      }
     })();
   </script>
 </body>
